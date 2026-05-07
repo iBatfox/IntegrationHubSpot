@@ -1,0 +1,21 @@
+from datetime import datetime
+from pydantic import BaseModel, EmailStr
+
+
+class UserBase(BaseModel):
+    email: EmailStr
+    full_name: str | None = None
+    role: str = "user"
+
+
+class UserCreate(UserBase):
+    password: str
+
+
+class UserRead(UserBase):
+    id: int
+    is_superuser: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

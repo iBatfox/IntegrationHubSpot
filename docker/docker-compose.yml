@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    container_name: hubspot_clone_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hubspot
+      POSTGRES_PASSWORD: hubspot
+      POSTGRES_DB: hubspot
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: hubspot_clone_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ../backend:/app
+    environment:
+      - SECRET_KEY=supersecretkey
+      - POSTGRES_USER=hubspot
+      - POSTGRES_PASSWORD=hubspot
+      - POSTGRES_DB=hubspot
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - CORS_ORIGINS=http://localhost:5173
+    depends_on:
+      - db
+    ports:
+      - '8000:8000'
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: hubspot_clone_frontend
+    command: npm run dev
+    volumes:
+      - ../frontend:/app
+    ports:
+      - '5173:5173'
+    depends_on:
+      - backend
+    working_dir: /app
+
+  nginx:
+    image: nginx:latest
+    container_name: hubspot_clone_nginx
+    ports:
+      - '8080:80'
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  db_data:

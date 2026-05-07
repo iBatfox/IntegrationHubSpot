@@ -1,0 +1,65 @@
+Always analyze the existing codebase and project structure before making changes.
+
+Do not rewrite large parts of the application unless explicitly requested.
+
+Prefer minimal, safe, and maintainable changes.
+
+Explain the implementation plan before writing code.
+
+Ask for confirmation before:
+- deleting files
+- refactoring architecture
+- modifying database schemas
+- changing authentication or security logic
+- editing production configurations
+- upgrading dependencies
+
+Do not create duplicate files, services, or utilities.
+
+Before creating new files, check whether similar functionality already exists.
+
+Prefer extending existing modules over introducing new architecture layers.
+
+Do not overengineer solutions.
+
+Keep code clean, simple, and production-ready.
+
+Follow existing project conventions and coding style.
+
+Use clear and consistent naming.
+
+Avoid unnecessary abstractions.
+
+Keep business logic separated from controllers/views when possible.
+
+Add error handling and logging for integrations and external API calls.
+
+Validate external API responses before processing data.
+
+Never hardcode secrets, API keys, passwords, or tokens.
+
+Use environment variables for configuration and credentials.
+
+Preserve backward compatibility unless explicitly instructed otherwise.
+
+When modifying integrations:
+- preserve existing API contracts
+- avoid breaking webhook logic
+- avoid changing field mappings without approval
+
+Before installing packages:
+- check existing dependencies
+- avoid unnecessary libraries
+
+Do not upgrade package versions without approval.
+
+Always use virtual environment commands for Python projects.
+
+After making changes:
+- check for syntax errors
+- verify imports
+- ensure code consistency
+
+If uncertain, ask instead of assuming.
+
+Prioritize reliability, readability, and maintainability over complexity.

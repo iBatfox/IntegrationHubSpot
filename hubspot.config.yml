@@ -1,0 +1,14 @@
+defaultPortal: ibatfox
+portals:
+  - name: ibatfox
+    env: prod
+    authType: personalaccesskey
+    accountType: STANDARD
+    personalAccessKey: >-
+      your_hubspot_personal_access_key
+    auth:
+      tokenInfo:
+        accessToken: >-
+          your_hubspot_access_token
+        expiresAt: '2026-05-06T21:39:05.808Z'
+    portalId: 148424530
