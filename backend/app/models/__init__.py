@@ -9,3 +9,4 @@ from app.models.deal import Deal  # noqa: F401
 from app.models.pipeline import PipelineStage  # noqa: F401
 from app.models.email_template import EmailTemplate  # noqa: F401
 from app.models.activity import Activity  # noqa: F401
+from app.models.gmail_account import GmailAccount  # noqa: F401

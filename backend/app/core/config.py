@@ -22,6 +22,19 @@ class Settings(BaseSettings):
     hubspot_access_token: str
     hubspot_base_url: str = "https://api.hubapi.com"
 
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    google_redirect_uri: str | None = None
+    google_auth_base_url: str = "https://accounts.google.com/o/oauth2/v2/auth"
+    google_token_url: str = "https://oauth2.googleapis.com/token"
+    google_gmail_api_base_url: str = "https://gmail.googleapis.com/gmail/v1"
+    google_oauth_scopes: List[str] = [
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "openid",
+        "email",
+        "profile",
+    ]
+
     @property
     def database_url(self) -> str:
         return (

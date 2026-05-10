@@ -4,8 +4,14 @@ import httpx
 from fastapi import APIRouter, Query, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_active_user
 from app.core.database import get_db
 from app.integrations.hubspot import HubSpotClient
+from app.integrations.gmail_importer import (
+    exchange_gmail_oauth_code,
+    get_gmail_oauth_url,
+    get_linkedin_email_preview,
+)
 from app.integrations.hubspot_importer import (
     dry_run_contacts,
     dry_run_companies,
@@ -16,6 +22,7 @@ from app.integrations.hubspot_importer import (
     import_contacts,
     import_companies,
 )
+from app.models.user import User
 
 
 logger = logging.getLogger(__name__)
@@ -46,6 +53,85 @@ def _map_network_error(error: Exception) -> HTTPException:
         status_code=502,
         detail="Bad Gateway: unable to reach HubSpot service",
     )
+
+
+def _map_google_error(error: httpx.HTTPStatusError) -> HTTPException:
+    status_code = error.response.status_code
+    if status_code == 400:
+        detail = "Bad Request: invalid Google OAuth request"
+    elif status_code == 401:
+        detail = "Unauthorized: invalid or expired Google token"
+    elif status_code == 403:
+        detail = "Forbidden: Google access denied"
+    elif status_code == 429:
+        detail = "Too many requests: Google rate limit exceeded"
+    elif 400 <= status_code < 500:
+        detail = f"Google client error ({status_code})"
+    else:
+        detail = f"Google service error ({status_code})"
+    return HTTPException(status_code=status_code, detail=detail)
+
+
+@router.get("/gmail/oauth/url")
+async def get_gmail_oauth_connect_url(current_user: User = Depends(get_current_active_user)):
+    try:
+        return await get_gmail_oauth_url()
+    except httpx.HTTPStatusError as e:
+        raise _map_google_error(e)
+    except httpx.RequestError as e:
+        raise _map_network_error(e)
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error("Unexpected Gmail error: %s", str(e))
+        raise HTTPException(
+            status_code=502,
+            detail="Bad Gateway: unexpected error communicating with Gmail",
+        )
+
+
+@router.get("/gmail/oauth/callback")
+async def gmail_oauth_callback(
+    code: str = Query(..., min_length=1),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    try:
+        return await exchange_gmail_oauth_code(db=db, user_id=current_user.id, code=code)
+    except httpx.HTTPStatusError as e:
+        raise _map_google_error(e)
+    except httpx.RequestError as e:
+        raise _map_network_error(e)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Unexpected Gmail error: %s", str(e))
+        raise HTTPException(
+            status_code=502,
+            detail="Bad Gateway: unexpected error communicating with Gmail",
+        )
+
+
+@router.get("/gmail/linkedin-emails/preview")
+async def preview_linkedin_emails(
+    limit: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    try:
+        return await get_linkedin_email_preview(db=db, user_id=current_user.id, limit=limit)
+    except httpx.HTTPStatusError as e:
+        raise _map_google_error(e)
+    except httpx.RequestError as e:
+        raise _map_network_error(e)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Unexpected Gmail error: %s", str(e))
+        raise HTTPException(
+            status_code=502,
+            detail="Bad Gateway: unexpected error communicating with Gmail",
+        )
 
 
 @router.get("/hubspot/contacts")
